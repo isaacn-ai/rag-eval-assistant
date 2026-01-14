@@ -1,0 +1,16 @@
+project:
+  name: rag-eval-assistant
+  description: Audit-first RAG assistant with evaluation harness.
+
+corpus:
+  source: ""
+  notes: "Describe the document set used for retrieval."
+
+retrieval:
+  chunk_size: 800
+  chunk_overlap: 120
+  top_k: 5
+
+evaluation:
+  enabled: true
+  notes: "Define metrics and evaluation set location."
