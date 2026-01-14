@@ -26,7 +26,10 @@ data/*
 # Logs / outputs
 *.log
 outputs/
+<<<<<<< HEAD
 
 # Local eval sets (do not commit)
 eval/eval_set.jsonl
 
+=======
+>>>>>>> f46b2f377555e1f3661b86de1349a7b6dc523b0f

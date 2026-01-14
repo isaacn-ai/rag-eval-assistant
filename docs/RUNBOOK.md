@@ -18,6 +18,10 @@ These commands will be implemented in future steps:
 - `python -m eval.run --config config.yaml`
 - `python eval/run_eval.py` 
 - `python src/ingest.py` 
+<<<<<<< HEAD
+=======
+- `python src/index.py` 
+>>>>>>> f46b2f377555e1f3661b86de1349a7b6dc523b0f
 
 ## Evaluation notes
 The evaluation harness will score:

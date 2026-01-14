@@ -1,0 +1,5 @@
+{"id":"q1","question":"What is this project building?","expected":"A retrieval-augmented generation (RAG) assistant that answers questions using a document corpus with citations."}
+{"id":"q2","question":"What are the core principles of this project?","expected":"Auditability, measurable evaluation, reproducibility."}
+{"id":"q3","question":"What does citation-backed answering mean here?","expected":"Answers should include quoted supporting text and a source reference to retrieved chunks."}
+{"id":"q4","question":"What will the evaluation harness measure?","expected":"Retrieval effectiveness, faithfulness to sources, and answer quality."}
+{"id":"q5","question":"What is the next milestone?","expected":"A minimal working pipeline plus a first evaluation set."}

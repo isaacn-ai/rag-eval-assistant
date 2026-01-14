@@ -1,0 +1,10 @@
+RAG Eval Assistant
+
+This project builds a retrieval-augmented generation (RAG) assistant that answers questions using a document corpus with citations.
+
+Core principles:
+- Auditability
+- Measurable evaluation
+- Reproducibility
+
+Planned features include ingestion, chunking, embeddings-based retrieval, citation-backed answers, and an evaluation harness.
