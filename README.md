@@ -1,6 +1,5 @@
 # rag-eval-assistant
 
-README content:
 
 Purpose: Build a retrieval-augmented generation (RAG) assistant that answers questions using a document corpus with citations.
 
