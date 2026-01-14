@@ -17,6 +17,7 @@ These commands will be implemented in future steps:
 - `python -m src.query --config config.yaml --question "..." --show-citations`
 - `python -m eval.run --config config.yaml`
 - `python eval/run_eval.py` 
+- `python src/ingest.py` 
 
 ## Evaluation notes
 The evaluation harness will score:
