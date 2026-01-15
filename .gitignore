@@ -19,17 +19,21 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Data (keep raw data out of git)
-data/*
-!data/.gitkeep
+# Local config (real config with paths/keys should stay local)
+config.yaml
 
-# Logs / outputs
-*.log
+# Data policy:
+# - Keep a tiny public sample corpus committed
+# - Keep all real/private corpora local
+data/raw/*
+!data/raw/.gitkeep
+!data/raw/sample_doc.txt
+
+# Generated artifacts (keep local)
+data/processed/
+data/index/
 outputs/
-<<<<<<< HEAD
+*.log
 
-# Local eval sets (do not commit)
-eval/eval_set.jsonl
-
-=======
->>>>>>> f46b2f377555e1f3661b86de1349a7b6dc523b0f
+# Local evaluation outputs (keep local)
+eval/results/
