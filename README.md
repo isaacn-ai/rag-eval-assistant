@@ -58,6 +58,15 @@ python -m eval.run_eval --top_k 5 --out outputs\eval_run.json
 
 This runs ingest → index → query → answer → eval and writes a local report to `outputs\eval_run.json` (not committed).
 
+### Windows note (cmd users)
+If you are using Command Prompt (cmd.exe) or cannot activate PowerShell scripts, you can run commands using the venv Python directly:
+
+```bat
+.\.venv\Scripts\python.exe -m eval.run_eval --top_k 5 --out outputs\eval_run.json
+```
+
+(Replace the module after `-m` as needed: `src.ingest`, `src.index`, `src.query`, `src.answer`, etc.)
+
 ### 1) Open PowerShell in the repo root
 In File Explorer, open the repo folder (where you see `README.md`, `src`, `eval`), click the address bar, type `powershell`, press Enter.
 
