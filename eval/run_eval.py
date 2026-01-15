@@ -8,6 +8,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from src.config import get_repo_root, load_config
+from src.answer import build_answer  # reuse audit-first answer builder
 
 
 def load_jsonl(path: Path) -> List[Dict[str, Any]]:
@@ -43,9 +44,9 @@ def search(
     meta: List[Dict[str, Any]],
     question: str,
     top_k: int,
-) -> List[Tuple[int, float, str, str]]:
+) -> List[Tuple[int, float, str, str, Dict[str, Any]]]:
     """
-    Returns: (row_index, score, citation, text)
+    Returns: (row_index, score, citation, text, meta_row)
     """
     q_emb = model.encode([question], normalize_embeddings=True)
     q_emb = np.asarray(q_emb, dtype=np.float32)
@@ -60,7 +61,7 @@ def search(
         row = meta[idx]
         citation = f"{row.get('source_file', 'unknown')}#{row.get('chunk_id', f'row_{idx}')}"
         text = row.get("text", "")
-        results.append((idx, score, citation, text))
+        results.append((idx, score, citation, text, row))
     return results
 
 
@@ -71,9 +72,9 @@ def write_json(path: Path, payload: Dict[str, Any]) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluation harness (retrieval hit@k + grounded@k).")
+    parser = argparse.ArgumentParser(description="Evaluation harness (hit@k + grounded@k + cited_answer@k).")
     parser.add_argument("--config", type=str, default=None, help="Path to config YAML (optional).")
-    parser.add_argument("--top_k", type=int, default=5, help="k for hit@k and grounded@k.")
+    parser.add_argument("--top_k", type=int, default=5, help="k for metrics.")
     parser.add_argument("--out", type=str, default=None, help="Optional path to write JSON results (local).")
     args = parser.parse_args()
 
@@ -104,13 +105,16 @@ def main():
 
     total = 0
 
-    # hit@k counters
+    # hit@k
     hits = 0
     missing_expected = 0
 
-    # grounded@k counters
+    # grounded@k
     grounded_hits = 0
     missing_required_terms = 0
+
+    # cited_answer@k
+    cited_answer_hits = 0
 
     per_example: List[Dict[str, Any]] = []
 
@@ -131,8 +135,8 @@ def main():
 
         total += 1
         results = search(model, index, meta, q, args.top_k)
-        retrieved_citations = [c for _, _, c, _ in results]
-        retrieved_texts = [t for _, _, _, t in results]
+        retrieved_citations = [c for _, _, c, _, _ in results]
+        retrieved_texts = [t for _, _, _, t, _ in results]
 
         # hit@k
         if not expected:
@@ -154,7 +158,17 @@ def main():
             grounded_hits += 1 if grounded else 0
             grounded_status = "GROUNDED" if grounded else "UNGROUNDED"
 
-        print(f"[{hit_status} | {grounded_status}] Q: {q}")
+        # cited_answer@k (auditability check)
+        # Reuse src.answer baseline: it returns citations + quotes derived from retrieved items.
+        retrieved_for_answer = [(score, row) for (_, score, _, _, row) in results]
+        answer_payload = build_answer(q, retrieved_for_answer, max_quotes=2)
+        answer_citations = [c["citation"] for c in answer_payload.get("citations", [])]
+
+        cited_answer = any(c in retrieved_citations for c in answer_citations) and len(answer_citations) > 0
+        cited_answer_hits += 1 if cited_answer else 0
+        cited_answer_status = "CITED" if cited_answer else "UNCITED"
+
+        print(f"[{hit_status} | {grounded_status} | {cited_answer_status}] Q: {q}")
         if expected:
             print(f"  expected_citations: {expected}")
         if required_terms:
@@ -170,6 +184,8 @@ def main():
                 "retrieved_citations": retrieved_citations,
                 "hit_at_k": hit,
                 "grounded_at_k": grounded,
+                "cited_answer_at_k": cited_answer,
+                "answer_citations": answer_citations,
             }
         )
 
@@ -178,6 +194,7 @@ def main():
 
     hit_rate = (hits / hit_scored_total) if hit_scored_total > 0 else 0.0
     grounded_rate = (grounded_hits / grounded_scored_total) if grounded_scored_total > 0 else 0.0
+    cited_answer_rate = (cited_answer_hits / total) if total > 0 else 0.0
 
     print("-" * 72)
     print(f"Examples total: {total}")
@@ -186,6 +203,7 @@ def main():
         f"grounded@{args.top_k}: {grounded_rate:.3f} ({grounded_hits}/{grounded_scored_total})  "
         f"[skipped_missing_required_terms={missing_required_terms}]"
     )
+    print(f"cited_answer@{args.top_k}: {cited_answer_rate:.3f} ({cited_answer_hits}/{total})")
 
     if args.out:
         out_path = Path(args.out)
@@ -205,6 +223,7 @@ def main():
                     "scored_total": grounded_scored_total,
                     "skipped": missing_required_terms,
                 },
+                "cited_answer_at_k": {"value": cited_answer_rate, "hits": cited_answer_hits, "scored_total": total},
             },
             "examples": per_example,
         }
