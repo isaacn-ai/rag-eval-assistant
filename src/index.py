@@ -1,9 +1,12 @@
+import argparse
 import json
 from pathlib import Path
 
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
+
+from src.config import get_repo_root, load_config
 
 
 def load_chunks(path: Path):
@@ -18,7 +21,16 @@ def load_chunks(path: Path):
 
 
 def main():
-    repo_root = Path(__file__).resolve().parents[1]
+    parser = argparse.ArgumentParser(description="Build a FAISS index from chunked JSONL.")
+    parser.add_argument("--config", type=str, default=None, help="Path to config YAML (optional).")
+    args = parser.parse_args()
+
+    cfg = load_config(args.config)
+    repo_root = get_repo_root()
+
+    retrieval_cfg = cfg.get("retrieval", {})
+    model_name = retrieval_cfg.get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
+
     chunks_path = repo_root / "data" / "processed" / "chunks.jsonl"
     out_dir = repo_root / "data" / "index"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -30,13 +42,11 @@ def main():
 
     chunks = load_chunks(chunks_path)
     texts = [c["text"] for c in chunks]
-    ids = [c["chunk_id"] for c in chunks]
 
     print(f"Loaded {len(texts)} chunks.")
+    print(f"Embedding model: {model_name}")
 
-    model_name = "sentence-transformers/all-MiniLM-L6-v2"
     model = SentenceTransformer(model_name)
-
     emb = model.encode(texts, normalize_embeddings=True)
     emb = np.asarray(emb, dtype=np.float32)
 
@@ -45,19 +55,18 @@ def main():
     index.add(emb)
 
     faiss_path = out_dir / "faiss.index"
-    meta_path = out_dir / "meta.jsonl"
-
     faiss.write_index(index, str(faiss_path))
 
+    meta_path = out_dir / "meta.jsonl"
     with meta_path.open("w", encoding="utf-8") as f:
-        for chunk_id, rec in zip(ids, chunks):
-            f.write(json.dumps({"chunk_id": chunk_id, "source_file": rec["source_file"]}, ensure_ascii=False) + "\n")
+        for c in chunks:
+            f.write(json.dumps(c, ensure_ascii=False) + "\n")
 
     print("Index build complete.")
-    print(f"Model:  {model_name}")
-    print(f"Index:  {faiss_path}")
-    print(f"Meta:   {meta_path}")
-    print(f"Vectors:{index.ntotal}  Dim:{d}")
+    print(f"Config:   {args.config or '(auto)'}")
+    print(f"Chunks:   {chunks_path}")
+    print(f"Index:    {faiss_path}")
+    print(f"Metadata: {meta_path}")
 
 
 if __name__ == "__main__":
