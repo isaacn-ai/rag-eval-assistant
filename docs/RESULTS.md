@@ -1,6 +1,6 @@
 # Results & Evaluation Reports
 
-This project writes evaluation outputs locally to support regression testing without committing generated artifacts.
+This project writes evaluation outputs locally to support regression testing 
 
 ## Where results live (local only)
 When you run:
