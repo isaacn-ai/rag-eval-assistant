@@ -59,7 +59,6 @@ python -m pip install -r requirements.txt
 ```powershell
 python -m src.ingest
 ```
-
 Expected output file:
 - `data/processed/chunks.jsonl`
 
@@ -67,7 +66,6 @@ Expected output file:
 ```powershell
 python -m src.index
 ```
-
 Expected output files:
 - `data/index/faiss.index`
 - `data/index/meta.jsonl`
@@ -76,18 +74,33 @@ Expected output files:
 ```powershell
 python -m src.query --question "What is this sample document about?" --top_k 5
 ```
-
 Expected behavior:
 - Prints the question
 - Prints top-k evidence chunks with a citation like `sample_doc.txt#sample_doc_0`
 
+### D) Answer (citation-backed baseline, no LLM)
+```powershell
+python -m src.answer --question "What is this sample document about?" --top_k 5 --max_quotes 2
+```
+Expected behavior:
+- Prints an evidence-first answer plus citations and quoted evidence.
+
 ---
 
 ## Evaluation (current)
-This currently prints the eval examples (scoring not implemented yet):
+This eval harness computes:
+- `hit@k` (retrieval contains expected citation)
+- `grounded@k` (retrieved text contains all required terms)
+- `cited_answer@k` (answer payload includes citations derived from retrieved evidence)
+
+Run:
 ```powershell
-python -m eval.run_eval
+python -m eval.run_eval --top_k 5 --out outputs\eval_run.json
 ```
+
+Notes:
+- `outputs/` is local-only and ignored by git.
+- `outputs/eval_run.json` is a machine-readable report for regression tracking.
 
 ---
 
@@ -101,4 +114,6 @@ To use an explicit config file path:
 python -m src.ingest --config config.example.yaml
 python -m src.index --config config.example.yaml
 python -m src.query --config config.example.yaml --question "..." --top_k 5
+python -m src.answer --config config.example.yaml --question "..." --top_k 5 --max_quotes 2
+python -m eval.run_eval --config config.example.yaml --top_k 5 --out outputs\eval_run.json
 ```
