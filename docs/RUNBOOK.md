@@ -104,3 +104,6 @@ To use an explicit config file path:
 python -m src.ingest --config config.example.yaml
 python -m src.index --config config.example.yaml
 python -m src.query --config config.example.yaml --question "..." --top_k 5
+
+
+END
