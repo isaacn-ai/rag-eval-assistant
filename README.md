@@ -1,17 +1,22 @@
 # RAG Eval Assistant (Audit-first)
 
-This project builds a minimal, audit-first Retrieval-Augmented Generation (RAG) system and (next) an evaluation harness. The focus is reliability: reproducible runs, measurable tests, and citation-backed evidence.
+This project builds a minimal, audit-first Retrieval-Augmented Generation (RAG) system and an evaluation harness. The focus is reliability: reproducible runs, measurable tests, and citation-backed evidence.
 
 ## What this is (today)
 A working, reproducible pipeline that:
 - Ingests local `.txt` documents into chunks (`data/processed/chunks.jsonl`)
 - Builds a FAISS vector index (`data/index/faiss.index` + `data/index/meta.jsonl`)
-- Retrieves top-k evidence chunks for a question with explicit citations (retrieval-only)
+- Retrieves top-k evidence chunks for a question with explicit citations
+- Produces a citation-backed answer baseline (no LLM; evidence quotes + citations)
+- Runs a measurable evaluation harness and writes a local JSON report (`outputs/eval_run.json`)
 
-## What this will become (next)
-- Citation-backed answering (RAG responses grounded in retrieved evidence)
-- An evaluation harness with measurable retrieval metrics and regressions
-- Failure analysis outputs (kept local/private by default)
+## Evaluation (current metrics)
+The evaluation harness computes:
+- `hit@k`: whether retrieved citations include `expected_citations`
+- `grounded@k`: whether retrieved text contains all `required_terms`
+- `correct_citations@k`: whether the answer payload includes at least one expected citation
+
+These metrics are designed to be transparent and regression-friendly.
 
 ---
 
@@ -53,10 +58,13 @@ python -m pip install -r requirements.txt
 python -m src.ingest
 python -m src.index
 python -m src.query --question "What is this sample document about?" --top_k 5
+python -m src.answer --question "What is this sample document about?" --top_k 5 --max_quotes 2
 ```
 
-Expected: the query step prints ranked evidence chunks with citations like:
-`sample_doc.txt#sample_doc_0`
+### 5) Run evaluation (writes a local JSON report)
+```powershell
+python -m eval.run_eval --top_k 5 --out outputs\eval_run.json
+```
 
 ---
 
@@ -64,4 +72,4 @@ Expected: the query step prints ranked evidence chunks with citations like:
 - Runbook: `docs/RUNBOOK.md`
 
 ## Status
-Initial scaffolding is working: ingest → index → retrieve (with citations). Evaluation scoring and answer generation are next.
+Audit-first baseline is working end-to-end. Next upgrades will add grounded generation (LLM) while preserving citations, and stronger faithfulness checks beyond keyword heuristics.
