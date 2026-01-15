@@ -52,4 +52,16 @@ python -m pip install -r requirements.txt
 ```powershell
 python -m src.ingest
 python -m src.index
-python -m src.query --que
+python -m src.query --question "What is this sample document about?" --top_k 5
+```
+
+Expected: the query step prints ranked evidence chunks with citations like:
+`sample_doc.txt#sample_doc_0`
+
+---
+
+## Documentation
+- Runbook: `docs/RUNBOOK.md`
+
+## Status
+Initial scaffolding is working: ingest → index → retrieve (with citations). Evaluation scoring and answer generation are next.
