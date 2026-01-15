@@ -91,7 +91,7 @@ Expected behavior:
 This eval harness computes:
 - `hit@k` (retrieval contains expected citation)
 - `grounded@k` (retrieved text contains all required terms)
-- `cited_answer@k` (answer payload includes citations derived from retrieved evidence)
+- `correct_citations@k` (answer payload includes at least one expected citation)
 
 Run:
 ```powershell
