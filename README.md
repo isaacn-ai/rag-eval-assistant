@@ -39,6 +39,15 @@ These metrics are designed to be transparent and regression-friendly.
 
 ## Quickstart (Windows PowerShell)
 
+## One-command demo (Windows)
+From the repo root in PowerShell:
+
+```powershell
+.\scripts\demo.ps1
+```
+
+This runs ingest → index → query → answer → eval and writes a local report to `outputs\eval_run.json` (not committed).
+
 ### 1) Open PowerShell in the repo root
 In File Explorer, open the repo folder (where you see `README.md`, `src`, `eval`), click the address bar, type `powershell`, press Enter.
 
