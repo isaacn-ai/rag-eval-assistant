@@ -1,7 +1,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 import faiss
 import numpy as np
@@ -55,10 +55,17 @@ def search(
     return results
 
 
+def write_json(path: Path, payload: Dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Evaluation harness (retrieval hit@k).")
     parser.add_argument("--config", type=str, default=None, help="Path to config YAML (optional).")
     parser.add_argument("--top_k", type=int, default=5, help="k for hit@k.")
+    parser.add_argument("--out", type=str, default=None, help="Optional path to write JSON results (local).")
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -90,6 +97,8 @@ def main():
     hits = 0
     missing_expectations = 0
 
+    per_example: List[Dict[str, Any]] = []
+
     print(f"Config: {args.config or '(auto)'}")
     print(f"Embedding model: {model_name}")
     print(f"Eval set: {eval_path}")
@@ -97,6 +106,7 @@ def main():
     print("-" * 72)
 
     for ex in eval_rows:
+        ex_id = ex.get("id", "")
         q = ex.get("question", "").strip()
         expected = ex.get("expected_citations", [])
 
@@ -108,6 +118,15 @@ def main():
         if not expected:
             missing_expectations += 1
             print(f"[SKIP] Missing expected_citations for question: {q}")
+            per_example.append(
+                {
+                    "id": ex_id,
+                    "question": q,
+                    "status": "SKIP",
+                    "expected_citations": expected,
+                    "retrieved_citations": [],
+                }
+            )
             continue
 
         results = search(model, index, meta, q, args.top_k)
@@ -121,14 +140,43 @@ def main():
         print(f"       expected: {expected}")
         print(f"       retrieved: {retrieved_citations[: min(len(retrieved_citations), 5)]}")
 
+        per_example.append(
+            {
+                "id": ex_id,
+                "question": q,
+                "status": status,
+                "expected_citations": expected,
+                "retrieved_citations": retrieved_citations,
+            }
+        )
+
     scored_total = total - missing_expectations
     hit_rate = (hits / scored_total) if scored_total > 0 else 0.0
+
+    summary = {
+        "top_k": args.top_k,
+        "hit_at_k": hit_rate,
+        "hits": hits,
+        "scored_total": scored_total,
+        "total": total,
+        "skipped_missing_expected": missing_expectations,
+        "embedding_model": model_name,
+        "eval_set_path": str(eval_path),
+    }
 
     print("-" * 72)
     print(f"Examples total: {total}")
     print(f"Examples scored: {scored_total}")
     print(f"Examples skipped (missing expected_citations): {missing_expectations}")
     print(f"hit@{args.top_k}: {hit_rate:.3f} ({hits}/{scored_total})")
+
+    if args.out:
+        out_path = Path(args.out)
+        if not out_path.is_absolute():
+            out_path = repo_root / out_path
+        payload = {"summary": summary, "examples": per_example}
+        write_json(out_path, payload)
+        print(f"Wrote JSON results to: {out_path}")
 
 
 if __name__ == "__main__":
