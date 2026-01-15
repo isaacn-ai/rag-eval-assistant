@@ -45,6 +45,16 @@ From the repo root in PowerShell:
 ```powershell
 .\scripts\demo.ps1
 ```
+If your system blocks running `.ps1` scripts (common on locked-down Windows setups), run the demo manually:
+
+```powershell
+python -m pip install -r requirements.txt
+python -m src.ingest
+python -m src.index
+python -m src.query --question "What is this sample document about?" --top_k 5
+python -m src.answer --question "What is this sample document about?" --top_k 5 --max_quotes 2
+python -m eval.run_eval --top_k 5 --out outputs\eval_run.json
+```
 
 This runs ingest → index → query → answer → eval and writes a local report to `outputs\eval_run.json` (not committed).
 
