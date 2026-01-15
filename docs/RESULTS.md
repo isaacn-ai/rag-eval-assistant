@@ -43,3 +43,15 @@ Purpose:
 3. Compare summary metrics between runs.
 
 A future step will add a small script to diff two result JSON files and highlight which examples changed.
+
+## Regression diff (compare two runs)
+If you saved two reports locally, you can diff them:
+
+```powershell
+python -m eval.diff_results --before outputs\eval_run_older.json --after outputs\eval_run_newer.json
+```
+
+This prints:
+- metric deltas (hit@k, grounded@k, correct_citations@k)
+- which example IDs changed status
+- the retrieved and answer citations before/after for quick debugging
