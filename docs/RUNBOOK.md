@@ -44,3 +44,61 @@ In File Explorer, open the repo folder (where you see `README.md`, `src`, `eval`
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+```
+
+### 3) Install dependencies
+```powershell
+python -m pip install -r requirements.txt
+```
+
+---
+
+## Pipeline (reproducible demo)
+
+### A) Ingest (raw documents → chunks)
+```powershell
+python -m src.ingest
+```
+
+Expected output file:
+- `data/processed/chunks.jsonl`
+
+### B) Index (chunks → embeddings + FAISS index)
+```powershell
+python -m src.index
+```
+
+Expected output files:
+- `data/index/faiss.index`
+- `data/index/meta.jsonl`
+
+### C) Query (retrieval-only with citations)
+```powershell
+python -m src.query --question "What is this sample document about?" --top_k 5
+```
+
+Expected behavior:
+- Prints the question
+- Prints top-k evidence chunks with a citation like `sample_doc.txt#sample_doc_0`
+
+---
+
+## Evaluation (current)
+This currently prints the eval examples (scoring not implemented yet):
+```powershell
+python -m eval.run_eval
+```
+
+---
+
+## Config notes
+- `config.example.yaml` is committed as a reference.
+- `config.yaml` is local/private and should not be committed.
+- Scripts auto-load `config.yaml` if it exists; otherwise they use `config.example.yaml`.
+
+To use an explicit config file path:
+```powershell
+python -m src.ingest --config config.example.yaml
+python -m src.index --config config.example.yaml
+python -m src.query --config config.example.yaml --question "..." --top_k 5
+```
